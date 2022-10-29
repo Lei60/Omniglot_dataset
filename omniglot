@@ -1,0 +1,69 @@
+import numpy as np
+import torchvision
+import torch
+
+
+def change_size(data):
+    _data = []
+    for dat in data:
+        total_data_cache = []
+        x, y = dat
+        x = x.convert('1')
+        x = x.resize((28, 28))
+        x = np.array(x, np.float32, copy=False)
+        x = 1.0 - torch.from_numpy(x)
+        x = torch.Tensor(x).view(1, 28, 28)
+        total_data_cache.append(x)
+        total_data_cache.append(y)
+        total_data.append(total_data_cache)
+    return _data
+
+
+def Omniglot_data(mode):
+    print('== loading omniglot dataset')
+    """
+    mode = 'train', 'validation', 'test'
+    """
+    root = r'C:\Users\s0805\PycharmProjects\pythonProject'
+    if mode == 'test':
+        background = False
+        """
+        - root: the directory where the dataset will be stored
+        - transform: how to transform the input
+        - target_transform: how to transform the target
+        - download: need to download the dataset
+        """
+        # You can use download=True to download dataset
+        data = torchvision.datasets.Omniglot(root=root, background=background, transform=None, download=False)
+        test_data = change_size(data)
+        y = [idx[1] for idx in test_data]
+        n_classes = len(np.unique(y))
+        print('==Dataset: Found {} items'.format(len(test_data)))
+        print('==Dataset: Found {} classes'.format(n_classes))
+        return test_data, y, n_classes
+    else:
+        background = True
+        data = torchvision.datasets.Omniglot(root=root, background=background, transform=None, download=False)
+        total_data = change_size(data)
+        y = [idx[1] for idx in total_data]
+        n_classes = len(np.unique(y))
+        val_label = list(np.random.randint(low=0, high=n_classes, size=int(n_classes * 0.2)))
+        val_data = []
+        train_data = []
+        for idx in total_data:
+            if idx[1] in val_label:
+                val_data.append(idx)
+            else:
+                train_data.append(idx)
+        if mode == 'train':
+            train_y = [idx[1] for idx in train_data]
+            n_classes = len(np.unique(train_y))
+            print('==Dataset: Found {} items'.format(len(train_data)))
+            print('==Dataset: Found {} classes'.format(n_classes))
+            return train_data, train_y, n_classes
+        else:
+            val_y = [idx[1] for idx in val_data]
+            n_classes = len(np.unique(val_y))
+            print('==Dataset: Found {} items'.format(len(val_data)))
+            print('==Dataset: Found {} classes'.format(n_classes))
+            return val_data, val_y, n_classes
